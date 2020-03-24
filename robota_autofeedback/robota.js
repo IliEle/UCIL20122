@@ -14,7 +14,9 @@ define([
         *  an object with keys name, operator, num_inputs, description, example and func.
         *
         * The function's first parameter is reserved for the line being validated.
-        * Thereafter, any additional parameters may be specified. Each function must return a boolean.
+        * Thereafter, any additional parameters may be specified. Each function must return a boolean with keys
+        * is_valid (bool) and feedback (str). is_valid should indicated whether the lines validates and feedback should
+        * be a helpful message to be displayed in validation fails.
         *
         * num_inputs should _EXCLUDE_ the first parameter in its count. So, if a validator only takes the line,
         * this should be 0.
@@ -27,7 +29,10 @@ define([
                 operator: "!=",
                 example: "!robota:!=:1",
                 func: function (line, value) {
-                    return line !== value;
+                    return {
+                        is_valid: line !== value,
+                        feedback: `We expected the line to be different from ${value}, why don't you try changing it?`
+                    };
                 }
             },
             {
@@ -37,7 +42,10 @@ define([
                 operator: "any",
                 example: "!robota:any:a = 1:a = 2:a = 3",
                 func: function(line, ...values) {
-                    return values.some(v => v === line);
+                    return {
+                        is_valid: values.some(v => v === line),
+                        feedback: `The line should be one of ${values}, but it isn't, why not trying changing it?`
+                    };
                 }
             },
             {
@@ -47,7 +55,11 @@ define([
                 operator: "is_conditional",
                 example: "!robota:is_conditional",
                 func: function(line) {
-                    return line.startsWith("if") && line.endsWith(":");
+                    return {
+                        is_valid: line.startsWith("if") && line.endsWith(":"),
+                        feedback: "The line should be a conditional, so should start with an 'if' and end with a colon" +
+                            "(:)"
+                    };
                 }
             },
             {
@@ -57,7 +69,11 @@ define([
                 operator: "is_for",
                 example: "!robota:is_for",
                 func: function(line) {
-                    return line.startsWith("for") && line.includes("in") && line.endsWith(":");
+                    return {
+                        is_valid: line.startsWith("for") && line.includes("in") && line.endsWith(":"),
+                        feedback: "The line should introduce a for loop, so should follow a template of type" +
+                            "'for val in some_list'"
+                    };
                 }
             }
         ];
@@ -119,14 +135,17 @@ define([
             // resulting value and building a human_readable message.
             let executor = function (line, f, parameters, name) {
                 line = line.trim();
-                let is_valid = f(line, ...parameters);
+                let validation_result = f(line, ...parameters);
+
+                let is_valid = validation_result.is_valid;
+                let validation_message = validation_result.feedback;
 
                 let message = "";
 
-                if(parameters.length > 0) {
-                    message = `Validator ${name} gave result ${is_valid} for parameters ${parameters}. Line: ${line}`
+                if(is_valid) {
+                    message = `Line ${line} was valid with regards to ${name}`;
                 } else {
-                    message = `Validator ${name} gave result ${is_valid}. Line: ${line}`
+                    message = `Look back at ${line}. ${validation_message}`;
                 }
 
                 return {
