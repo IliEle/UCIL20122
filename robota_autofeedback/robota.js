@@ -143,7 +143,7 @@ define([
                 let message = "";
 
                 if(is_valid) {
-                    message = `Line ${line} was valid with regards to ${name}`;
+                    message = `Line ${line} was valid with regards to operator ${name}`;
                 } else {
                     message = `Look back at ${line}. ${validation_message}`;
                 }
