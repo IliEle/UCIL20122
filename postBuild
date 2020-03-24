@@ -1,0 +1,4 @@
+jupyter contrib nbextension install --user
+jupyter nbextension install robota_autofeedback/robota.js --user
+jupyter nbextension enable robota --user
+
